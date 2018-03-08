@@ -1,0 +1,305 @@
+package gramaticas;
+
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+import Arbol.*;
+import interpretes.error;
+
+//*** Codigo para el parser, variables, metodos
+
+parser code
+{:  
+    
+    public nodo raiz;
+    //** Metodo al que se llama automaticamente ante algun error sintactico.*/
+    public void syntax_error(Symbol s)
+    {        
+        System.out.println("Error Sintactico Recuperado /////// lexema: " +s.value+ " Fila: " +s.right+ " Columna: "+s.left);
+        control.agregarError(new error("SINTACTICO","lexema: " +s.value,s.left,s.right));
+        //ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    /**Metodo al que se llama en el momento en que ya no es posible una recuperacion de errores.*/
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {        
+        System.out.println("Error Sintactico Panico ////// Lexema: " +s.value+" Fila: "+s.right+ " Columna: "+s.left);
+        control.agregarError(new error("SINTACTICO","lexema: " +s.value,s.left,s.right));
+       // ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    public void semantic(Symbol cur_token, String n) 
+    {
+        System.out.println("error semantico ");
+    }
+
+    public void semantic(String msg, Object obj) {}
+
+:}
+
+
+//*** Codigo para las acciones gramaticales
+
+action code
+{:
+
+    
+   // public ArrayList<Token> lista_reservadasB = new ArrayList<>();
+   // public void guardarReservada(String valor, int linea, int columna, String descripcion)
+   // {
+    //    lista_reservadasB.add(new Token(valor, linea, columna, descripcion));
+  // }
+:}  
+
+
+/*----------------------------------------------------------------------------
+----------------------------------------- Area de Declaraciones
+----------------------------------------------------------------------------*/
+
+//*** Simbolost
+terminal  html,chtml,head,fin_head,ma,me,fincss;
+terminal  tabla,fin_tabla,filt,fin_filt,cb,fin_cb,ct,fin_ct,texto_a,fin_texto_a,cajatexto,fin_cajatexto,caja,fin_caja,opcion,fin_opcion;
+terminal  spinner,fin_spinner,salto,valor,click,ruta,t_id,grupo,ancho,alto,alineado,cuerpo,fincuerpo;
+terminal  cjs,fincjs,css,titulo,fin_titulo,panel,fin_panel,texto,fin_texto,imagen,fin_imagen,boton,fin_boton,enlace,fin_enlace;
+terminal  igual1,coma,dosp,ppt,mas,menos,por,dividir,pot,aumento,decremento,apar,cpar;
+
+terminal  String numero,tstring,tchar,id,cualquier_cosa;//,s_texto
+
+//*** Operadores
+non terminal nodo INICIO,HEAD,BODY,F,L_HEAD,CSS,CJS,CONTENIDO_HEAD;
+non terminal nodo ATRIBUTOS,CLICK,L_ATRIBUTOS,RUTA,IDEN,GRUPO,ALTO,ANCHO,ALIN,VALOR;
+non terminal nodo TITULO,SENTENCIAS,SENTENCIA,PANEL,FIN,TEXTO,CAJA_TEXTO;
+non terminal nodo CT,CB,BOTON,ENLANCE,TEXTO_AREA,CAJA,LISTA_OPCIONES,OPCION,SPINNER,BR;
+non terminal nodo TABLA,LISTA_TABLA,LISTA_TABLE,FILA,E,IMAGEN,CONTENIDO_TABLA;
+
+//****PRECEDENCIA
+precedence left mas, menos;
+precedence left por,dividir;
+precedence left pot;
+precedence left aumento,decremento;
+
+
+start with INICIO;
+
+
+//INICIO::=  me texto ma cualquier_cosa me fin_texto ma ;
+
+INICIO::= me html ma L_HEAD:a BODY:b 
+          
+          me chtml  ma                                    {:nodo raizz= new nodo("HTML",a,b);  parser.raiz=raizz;:};
+
+L_HEAD::=  L_HEAD:a HEAD:b                                {:a.hijos.addLast(b); RESULT=a;:}
+         | HEAD:a                                         {:RESULT= new nodo("LISTA_HEAD",a);:};
+
+
+HEAD::=   me head:a ma  CONTENIDO_HEAD:b
+          me fin_head ma                                  {:RESULT=b; :};//{:RESULT= new nodo("HEAD",b);:};
+
+
+CONTENIDO_HEAD::= CONTENIDO_HEAD:a CSS:b                  {:a.hijos.addLast(b); RESULT=a;:}
+                | CONTENIDO_HEAD:a CJS:b                  {:a.hijos.addLast(b); RESULT=a;:}
+                | CONTENIDO_HEAD:a TITULO:b               {:a.hijos.addLast(b); RESULT=a;:}
+                | CSS:a                                   {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                | CJS:a                                   {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                | TITULO:a                                {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                | error CSS:a                             {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                | error CJS:a                             {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                | error TITULO:a                          {:RESULT= new nodo("CONTENIDO_HEAD",a);:}
+                ;
+
+CSS::= me css RUTA:a ma me fincss ma                      {:RESULT = new nodo("CSS",a);:};
+
+CJS::= me cjs RUTA:a ma me fincjs ma                      {:RESULT = new nodo("CJS",a);:};
+
+TITULO::= me titulo ma cualquier_cosa:a me fin_titulo ma  {:RESULT = new nodo("TITULO",a,aleft,aright);:};
+
+BODY::= me cuerpo ma  SENTENCIAS:a  me fincuerpo ma:z     {:RESULT = new nodo("CUERPO",a);:}// {:RESULT = new nodo("CUERPO",zleft,zright);:}//
+    ;        
+
+
+FIN::=  L_ATRIBUTOS:a ma                                  {:RESULT= new nodo("FIN",a);:}
+      | ma:a                                              {:RESULT= new nodo("FIN",aleft,aright);:}
+      | error ma:a                                        {:RESULT= new nodo("FIN",aleft,aright);:}
+      ;
+
+
+L_ATRIBUTOS::= L_ATRIBUTOS:a ATRIBUTOS:b                  {:a.hijos.addLast(b); RESULT=a;:}
+            |  ATRIBUTOS:a                                {:RESULT= new nodo("ATRIBUTOS",a);:}
+            ;
+
+
+ATRIBUTOS::= CLICK:a                                      {:RESULT = a;:}
+          |  RUTA:a                                       {:RESULT = a;:}
+          |  IDEN:a                                       {:RESULT = a;:}
+          |  GRUPO:a                                      {:RESULT = a;:}
+          |  ALTO:a                                       {:RESULT = a;:}
+          |  ANCHO:a                                      {:RESULT = a;:}
+          |  ALIN:a                                       {:RESULT = a;:}
+          |  VALOR:a                                      {:RESULT = a;:}
+          |  error ATRIBUTOS:a                            {:RESULT = a;:}
+          ;
+
+//ATRIBUTOS PARA LOS ELEMENTOS HTML
+CLICK::=  click   igual1 E:a ppt                          {:RESULT = new nodo("CLICK",a);:};//ver los espacios aqui
+RUTA::=   ruta    igual1 E:a ppt                          {:RESULT = new nodo("RUTA",a);:};
+IDEN::=   t_id    igual1 E:a ppt                          {:RESULT = new nodo("IDEN",a);:};
+GRUPO::=  grupo   igual1 E:a ppt                          {:RESULT = new nodo("GRUPO",a);:};
+ALTO::=   alto    igual1 E:a ppt                          {:RESULT = new nodo("ALTO",a);:};
+ANCHO::=  ancho   igual1 E:a ppt                          {:RESULT = new nodo("ANCHO",a);:};
+ALIN::=   alineado igual1 E:a ppt                         {:RESULT = new nodo("ALINEADO",a);:};
+VALOR::=  valor   igual1 E:a ppt                          {:RESULT = new nodo("VALOR",a);:};
+
+
+//SENTENCIAS DE HTML
+
+SENTENCIAS::= SENTENCIAS:a SENTENCIA:b                    {:a.hijos.addLast(b); RESULT=a;:}
+          |   SENTENCIA:a                                 {:RESULT= new nodo("SENTENCIAS",a);:}
+          ;
+
+SENTENCIA::= PANEL:a                                      {:RESULT = a;:} 
+          |  TEXTO:a                                      {:RESULT = a;:}
+          |  CAJA_TEXTO:a                                 {:RESULT = a;:}
+          |  BOTON:a                                      {:RESULT = a;:}
+          |  ENLANCE:a                                    {:RESULT = a;:}
+          |  SPINNER:a                                    {:RESULT = a;:}
+          |  BR:a                                         {:RESULT = a;:}
+          |  TABLA:a                                      {:RESULT = a;:}
+          |  TEXTO_AREA:a                                 {:RESULT = a;:}
+          |  IMAGEN:a                                     {:RESULT = a;:}
+          |  CAJA:a                                       {:RESULT = a;:}
+          //|  error SENTENCIA:a                            {:RESULT = a;:}
+          |  error PANEL:a                                {:RESULT=a;:}                                      
+          |  error TEXTO:a                                {:RESULT=a;:}                                   
+          |  error CAJA_TEXTO:a                           {:RESULT=a;:}                                
+          |  error BOTON:a                                {:RESULT=a;:}                                
+          |  error ENLANCE:a                              {:RESULT=a;:}                                
+          |  error SPINNER:a                              {:RESULT=a;:}                                
+          |  error BR:a                                   {:RESULT=a;:}                                
+          |  error TABLA:a                                {:RESULT=a;:}                                
+          |  error TEXTO_AREA:a                           {:RESULT=a;:}                               
+          | error  IMAGEN:a                               {:RESULT=a;:}                                
+          |  error CAJA:a                                 {:RESULT=a;:}                               
+          ;
+
+
+PANEL::= me panel FIN:a SENTENCIAS:b
+         me fin_panel ma                                  {:RESULT = new nodo("PANEL",a,b);:}
+         ;
+
+TEXTO::=  me texto FIN:a cualquier_cosa:b                        
+          me fin_texto ma                                 {: nodo texto = new nodo("TEXTO",b,bleft,bright); texto.add(a); RESULT = texto;:}
+        ;
+
+
+CAJA_TEXTO::=  me cajatexto FIN:a cualquier_cosa:b 
+               me fin_cajatexto ma                        {:nodo texto = new nodo("CAJA_TEXTO",b,bleft,bright); texto.add(a); RESULT = texto;:}
+          ;
+
+
+BOTON::= me boton  FIN:a cualquier_cosa:b 
+         me fin_boton ma                                  {:nodo texto = new nodo("BOTON",b,bleft,bright); texto.add(a); RESULT = texto;:}
+         ;
+
+ENLANCE::= me enlace FIN:a cualquier_cosa:b 
+           me fin_enlace ma                               {:nodo texto = new nodo("ENLANCE",b,bleft,bright); texto.add(a); RESULT = texto;:} 
+           ;
+
+TEXTO_AREA::= me texto_a FIN:a cualquier_cosa:b 
+              me fin_texto_a ma                           {:nodo texto = new nodo("TEXTO_AREA",b,bleft,bright); texto.add(a); RESULT = texto;:}
+          ;
+
+CAJA::=  
+       me caja FIN:a  LISTA_OPCIONES:z me fin_caja ma     {:RESULT = new nodo("CAJA",a,z);:}
+         ;
+/*me caja FIN:a  LISTA_OPCIONES:z                   
+        me fin_caja ma                                    {:RESULT = new nodo("CAJA",a,z);:}
+        ;
+*/
+LISTA_OPCIONES ::=  LISTA_OPCIONES:a OPCION:b             {:a.hijos.addLast(b); RESULT=a;:}
+                |   OPCION:a                              {:RESULT = new nodo("OPCIONES",a);:}   
+                ;
+
+
+OPCION::= me opcion FIN:a cualquier_cosa:b 
+          me fin_opcion ma                                {:nodo texto = new nodo("OPCION",b,bleft,bright); texto.add(a); RESULT = texto;:}         
+        ;
+
+SPINNER::= me spinner FIN:a E:b                          
+           me fin_spinner ma                              {:RESULT = new nodo("SPINNER",a,b);:}
+           ;
+
+BR::= me salto:a ma                                       {:RESULT = new nodo("SALTO",aleft,aright);:}                    
+      ;
+
+TABLA::= me tabla FIN:a   LISTA_TABLA:b                    
+         me fin_tabla ma                                  {:RESULT = new nodo("TABLA",a,b);:}
+      ;
+
+
+LISTA_TABLA::=  LISTA_TABLA:a FILA:b                      {:a.hijos.addLast(b); RESULT=a;:}
+            |   FILA:a                                    {:RESULT = new nodo("LISTA_FILAS",a);:} 
+            ;
+
+FILA::= me filt FIN:a LISTA_TABLE:b me fin_filt ma        {:RESULT= new nodo("FILA",a,b);:}
+    ;
+
+
+LISTA_TABLE::= 
+               LISTA_TABLE:a  CB:b                        {:a.hijos.addLast(b); RESULT=a;:}
+             | LISTA_TABLE:a  CT:b                        {:a.hijos.addLast(b); RESULT=a;:}
+             | CT:a                                       {:RESULT = new nodo("LISTA_CT",a);:} 
+             | CB:a                                       {:RESULT = new nodo("LISTA_CB",a);:} 
+             | error CT:a                                       {:RESULT = new nodo("LISTA_CT",a);:} 
+             | error CB:a                                       {:RESULT = new nodo("LISTA_CB",a);:} 
+             ;
+
+CB::= me cb FIN:a CONTENIDO_TABLA:b 
+      me fin_cb ma                                        {:RESULT= new nodo("CB",a,b); :}
+    ;
+
+CT::= me ct FIN:a CONTENIDO_TABLA:b 
+      me fin_ct  ma                                       {:RESULT = new nodo("CT",a,b); :}
+    ;
+
+
+/*
+CB::= me cb FIN:a cualquier_cosa:b 
+      me fin_cb ma                                        {:nodo texto = new nodo("CB",b,bleft,bright); texto.add(a); RESULT = texto;:}
+    ;
+
+CT::= me ct FIN:a cualquier_cosa:b 
+      me fin_ct  ma                                        {:nodo texto = new nodo("CT",b,bleft,bright); texto.add(a); RESULT = texto;:}
+    ;
+
+*/
+CONTENIDO_TABLA::= BOTON:a                                {:RESULT=a;:}
+                |  IMAGEN:a                               {:RESULT=a;:}
+                |  cualquier_cosa:b                       {:RESULT= new nodo("CQ",b,bleft,bright);:}
+                |  error CONTENIDO_TABLA:a                {:RESULT= a;:}
+                ;
+
+IMAGEN::= me imagen FIN:a cualquier_cosa:b  
+          me fin_imagen ma                                {:nodo texto = new nodo("IMAGEN",b,bleft,bright); texto.add(a); RESULT = texto;:}
+          ;
+
+E::=
+     E:a menos E:b                                        {:RESULT = new nodo("-",a,b);:}
+   | E:a por E:b                                          {:RESULT = new nodo("*",a,b);:}
+   | E:a dividir E:b                                      {:RESULT = new nodo("/",a,b);:}
+   | E:a pot E:b                                          {:RESULT = new nodo("pot",a,b);:}
+   | E:a mas E:b                                          {:RESULT = new nodo("+",a,b);:}
+   | E:a aumento                                          {:RESULT = new nodo("++",a);:}
+   | E:a decremento                                       {:RESULT = new nodo("--",a);:}
+   | F:a                                                  {:RESULT = a;:}
+   ;
+
+F::= numero:a                                             {:RESULT = new nodo("NUM",a,aleft,aright);:}
+    |tstring:a                                            {:RESULT =  new nodo("STRING",a.replaceAll("\"",""),aleft,aright);:}
+    |tchar:a                                              {:RESULT = new nodo("CHAR",a.replaceAll("'",""),aleft,aright);:}
+    |id:a                                                 {:RESULT = new nodo("ID",a,aleft,aright);:}
+    |apar E:a cpar                                        {:RESULT = a;:}
+  ;
+
+
+

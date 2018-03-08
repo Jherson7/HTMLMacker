@@ -1,0 +1,160 @@
+<chtml>
+<encabezado>
+<ccss ruta="hola";> <fin-ccss>
+<cjs  ruta="hola";> <fin-cjs>
+<fin-encabezado>
+
+<cuerpo>
+
+<caja> 
+<opcion> hola <fin-opcion>
+<fin-caja>
+
+<fin-cuerpo>
+<fin-chtml>
+
+    
+C:\Users\Jherson\Documents\UNIVERSIDAD\1 SEM 2018\COMPILADORES2\ArchivosProyecto1\html.chtml
+
+
+
+//javascript
+
+si(x>y){
+	mensaje("hola");
+	imprimir("jherson");
+}sino{
+	mensaje("no");
+	factorial(5);
+	para(a:10;a>0;--){
+		factorial(a);
+	}
+}
+
+selecciona(15){
+	caso 10:
+		imprimir("10");
+	caso 15:
+		imprimir("15");
+		caso 25:
+		imprimir("25");
+		caso 35:
+		imprimir("35");
+		caso 45:
+		imprimir("45");
+		caso 55:
+		imprimir("55");
+	defecto:
+		imprimir("defecto");
+}
+
+
+
+dimV miCadena: "Jherson";
+imprimir(miCadena);
+
+miCaDena: "nuevo valor";
+imprimir(micadena);
+
+
+dimv cont :0;
+
+mientras(cont < 10){
+	imprimir(cont);
+	cont : cont + 1;
+
+	Si(cont==10){
+		Mensaje("Llego a 10");
+	}sino{
+		si(cont==5){
+		Mensaje("va por 5");
+		}
+	}
+}
+
+
+
+//*****************para probar comparacion con cadenas
+
+//archivo aritmetica.gk
+dimV b :15 + 13*(2) - 16;
+dimv c;
+dimv a;
+        c : 11 - 3 * (6^4) + 16;
+        a : ((b^2) + (c^2));
+        
+        imprimir(a);
+imprimir(c);
+        imprimir("a^2 = " + ((b^2) + (c^2)));
+        imprimir("Resultado = 50");   
+imprimir(  (10+41*(-1)^2 - (14/2)^3) + 15.6  );
+
+/********************************
+
+funcion factorial(x){
+	si(x<=1){
+		retornar 1;
+	}sino{
+		retornar x*factorial(x- 1);
+		imprimir("ve ve ve");
+	}
+}
+
+
+funcion fibonacci(n){
+        si (n<=1){
+            retornar 1;
+        }sino {
+           retornar fibonacci(n-1) + fibonacci(n-2);
+        }
+}
+
+
+funcion fibonacci(n,m){
+       retornar (n+m);
+}
+
+
+
+imprimir(fibonacci(10));
+imprimir(fibonacci(10,20));
+
+
+
+
+imprimir(-((((((((5)*45)+10)))))+vector.conteo));
+
+DimV miCadena;
+DimV miVector: {"hola","jherson",1,2,3};
+imprimir(mivector{1});
+
+//vector estatico
+dimv estatico{3};
+estatico{2}: "Jherson";
+
+imprimir(estatico{2});
+
+DimV miCadena;
+DimV miVector: {"hola","jherson",1,2,3};
+MiCadena:miVector.aTexto() + 963258;
+imprimir(micadena);
+
+MiCadena:miVector.conteo;
+
+DimV miVector: {"hola","jherson",1,2,3};
+DimV arit : -((((((((5)*45)+10)))))+ miVector.conteo);
+imprimir(arit);
+
+
+
+//***********************cccssssssssssssssssssssssss
+
+
+dimv fecha1: '25/05/1992';
+dimv fecha2: "26/05/1992";
+
+si(fecha1>fecha2){
+	imprimir("fecha 1 mayor que fecha 2");
+}sino{
+	imprimir("fecha 2 mayor que fecha 1");
+}

@@ -1,0 +1,310 @@
+package gramatica_js;
+
+import java_cup.runtime.Symbol;
+import Arbol.*;
+import interpretes.error;
+
+
+//*** Codigo para el parser, variables, metodos
+
+parser code
+{:  
+    
+	public nodo raiz;
+    //** Metodo al que se llama automaticamente ante algun error sintactico.*/
+    public void syntax_error(Symbol s)
+    {        
+        System.out.println("Error Sintactico Recuperado /////// lexema: " +s.value+ " Fila: " +s.right+ " Columna: "+s.left);
+        control.agregarError(new error("SINTACTICO","lexema: " +s.value,s.left,s.right));
+        //ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    /**Metodo al que se llama en el momento en que ya no es posible una recuperacion de errores.*/
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {        
+        System.out.println("Error Sintactico Panico ////// Lexema: " +s.value+" Fila: "+s.right+ " Columna: "+s.left);
+        control.agregarError(new error("SINTACTICO","lexema: " +s.value,s.left,s.right));
+       // ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    public void semantic(Symbol cur_token, String n) 
+    {
+        System.out.println("error semantico ");
+    }
+
+    public void semantic(String msg, Object obj) {}
+
+:}
+
+
+//*** Codigo para las acciones gramaticales
+
+action code
+{:
+
+
+:}  
+
+
+/*----------------------------------------------------------------------------
+----------------------------------------- Area de Declaraciones
+----------------------------------------------------------------------------*/
+
+//*** Simbolos
+
+terminal coma,dosp,ppt,dim,si,sino,mientras,para,selecciona,caso,defecto,TRUE,FALSE;//igual1
+terminal detener,continuar,funcion,imprimir,mensaje,documento,obtener,setElemento;
+terminal observador,mas,menos,por,dividir,pot,aumento,decremento,apar,cpar,alla,clla;//cora,corc;
+terminal OR,AND,NOT,iigual,noig,mayor,menor,mayorigual,menorigual,retornar,aTexto,punto;
+terminal conteo;
+
+terminal String numero,tstring,fechas,id,tchar;
+
+
+//*** Operadores
+non terminal nodo INICIO, E,F,OP,REL,L_VALORES,AUMENTOS;
+non terminal nodo DECLARAR, DECLARAR_ASIG,ASIGNAR,SENTENCIAS,SENTENCIA,VECTOR;
+non terminal nodo DEC_VECTOR,ASIG_VECTOR,SI,ELSE,CASE,CASO,LISTA_CASO,DEFECTO;
+non terminal nodo FOR,WHILE,IMPRIMIR,CICLOS,ATEXTO,FUNCION,LISTA_ID,MENSAJE,PARAMETROS;
+non terminal nodo CALLFUN,RETORNAR;
+
+
+precedence left OR;
+precedence left AND;
+precedence left NOT;
+precedence left iigual, noig;
+precedence left mayor, menor, mayorigual, menorigual;
+precedence left mas, menos;
+precedence left por,dividir;
+precedence left pot;
+precedence left aumento,decremento;
+precedence left id;
+
+start with INICIO;
+
+
+
+INICIO::=SENTENCIAS:a  								{:nodo raizz= new nodo("JS",a);  parser.raiz=raizz;:}
+		;
+
+SENTENCIAS::= SENTENCIAS:a SENTENCIA:b 				{:a.add(b); RESULT=a;:}
+			| SENTENCIA:a 							{:RESULT= new nodo("SENTENCIAS",a);:}
+			;
+		
+
+SENTENCIA::= DECLARAR:a ppt 						{:RESULT=a;:}
+		 |	 DECLARAR_ASIG:a ppt 					{:RESULT=a;:}
+		 | 	 ASIGNAR:a ppt 							{:RESULT=a;:}
+		 |	 ASIG_VECTOR:a ppt 						{:RESULT=a;:}
+		 |	 DEC_VECTOR:a ppt	 					{:RESULT=a;:}
+		 | 	 detener:a ppt 							{:RESULT = new nodo("BREAK",aleft,aright);:}
+		 |   RETORNAR:a ppt 						{:RESULT= a;:}
+		 |   IMPRIMIR:a ppt 						{:RESULT=a;:}
+		 |   CICLOS:a 								{:RESULT=a;:}
+		 |	 ATEXTO:a ppt 							{:RESULT=a;:}
+		 |	 FUNCION:a 								{:RESULT=a;:}
+		 |   MENSAJE:a ppt 							{:RESULT=a;:}
+		 |   continuar:a ppt 						{:RESULT = new nodo("continuar",aleft,aright);:}
+		 |   CALLFUN:a 	ppt							{:RESULT=a;:}
+		 |   E:a aumento   ppt                  	{:RESULT = new nodo("++",a);:}
+   		 |   E:a decremento  ppt                	{:RESULT = new nodo("--",a);:}
+		 ;
+
+DECLARAR::= dim id:a 								{:RESULT= new nodo("DECLARAR",a,aleft,aright);:} 
+	    ;
+
+DECLARAR_ASIG::= dim id:a dosp REL:b 				{:RESULT= new nodo("DECLARAR_ASIG",a,b,aleft,aright);:}
+			 ;
+
+ASIGNAR::= id:a dosp REL:b 							{:RESULT= new nodo("ASIGNAR",a,b,aleft,aright);:}
+		;
+
+ASIG_VECTOR::= id:a alla REL:b clla dosp REL:c 		{:nodo nuevo= new nodo("ASIGNAR_VECTOR",a,b,aleft,aright); nuevo.add(c); RESULT=nuevo;:}
+			;
+
+
+
+DEC_VECTOR::= dim id:a alla E:b clla 			 	{:RESULT= new nodo("DIMENSION",a,b,aleft,aright);:}
+		;
+
+
+L_VALORES::= L_VALORES:a coma REL:b 			 	{:a.add(b); RESULT=a;:}
+		 |	 REL:a 									{:RESULT= new nodo	("L_VALORES",a);:}
+		 ;
+
+
+//IF,WHILE,FOR,ETC
+
+SI::= si apar REL:a cpar 
+	  alla SENTENCIAS:b clla  						{:nodo nuevo = new nodo("IF",a,b);  RESULT=nuevo;:}
+
+	| si apar REL:a cpar 
+	  alla SENTENCIAS:b clla ELSE:c 				{:nodo nuevo = new nodo("IF",a,b); nuevo.add(c); RESULT=nuevo;:}
+	;
+
+
+ELSE::= sino alla SENTENCIAS:a clla 				{:RESULT= new nodo("ELSE",a);:}
+		;
+
+//**********************CASE******************///
+CASE::= selecciona apar REL:a cpar 
+		alla LISTA_CASO:b clla 						{:RESULT= new nodo("CASE",a,b);:}
+
+	 |	selecciona apar REL:a cpar 
+	 	alla LISTA_CASO:b DEFECTO:c clla 			{:nodo nuevo = new nodo("CASE",a,b); nuevo.add(c); RESULT=nuevo;:}
+	 ;
+
+LISTA_CASO::= LISTA_CASO:a CASO:b 					{:a.add(b); RESULT=a;:}
+		| CASO:a 									{:RESULT=new nodo("CASOS",a);:}
+		;
+
+CASO::=  caso E:a dosp SENTENCIAS:b  				{:RESULT= new nodo("CASO",a,b);:}
+	;
+
+DEFECTO::= defecto dosp SENTENCIAS:a 				{:RESULT=new nodo("DEFECTO",a);:}	
+		;	
+
+AUMENTOS::= aumento:b 								{:RESULT= new nodo("AUMENTO","++",bleft,bright);:}
+		|   decremento:b 							{:RESULT= new nodo("DECREMENTO","--",bleft,bright);:}
+		;
+
+//**********FOR***//////////
+FOR::= para	 apar ASIGNAR:a ppt REL:b ppt 
+	   AUMENTOS:c cpar alla SENTENCIAS:d clla 		{:nodo nuevo = new nodo("FOR",a,b); nuevo.add(c);nuevo.add(d); RESULT= nuevo;:}			
+	   ;
+
+
+//***************WHILE****************/////
+WHILE::= mientras apar REL:a cpar 
+		 alla SENTENCIAS:b clla 					{:RESULT= new nodo("WHILE",a,b);:}
+		;
+
+
+//*************IMPRIMIR****************///
+
+IMPRIMIR::= imprimir apar REL:a cpar 				{:RESULT=new nodo("IMPRIMIR",a);:}	
+		;
+
+
+//**************CICLOS
+
+CICLOS::= SI:a 										{:RESULT=a;:}
+		| CASE:a 									{:RESULT=a;:}
+		| FOR:a 									{:RESULT=a;:}
+		| WHILE:a 									{:RESULT=a;:}
+		;
+
+
+//************ VECTOR A TEXTO
+/*
+ATEXTO::= E:a punto aTexto apar cpar 				{:RESULT=new nodo("ATEXTO",a);:}
+	  ;*/
+
+ATEXTO::= id:a punto aTexto apar cpar 				{:RESULT=new nodo("ATEXTO",new nodo("ID",a,aleft,aright));:}
+;
+	  
+
+VECTOR::= alla L_VALORES:a clla 					{:RESULT= new nodo("VECTOR",a);:}
+		//| alla L_VALORES:a clla punto conteo 		{:RESULT=new nodo("CONTEO",new nodo("VECTOR",a));:}
+		;
+
+///************PRODUCCION DE FUNCIONES
+
+FUNCION::= funcion id:a apar LISTA_ID:b cpar 
+		   alla SENTENCIAS:c clla 				  	{:nodo nuevo = new nodo("FUNCION",a,b,aleft,aright); nuevo.add(c); RESULT=nuevo;:}
+
+		|  funcion id:a apar cpar //metodo o funcion sin parametros
+		   alla SENTENCIAS:c clla 				  	{:nodo nuevo = new nodo("FUNCION",a,c,aleft,aright); RESULT=nuevo;:}
+		;
+
+
+//***************LISTA IDS
+
+LISTA_ID::= LISTA_ID:a coma id:b 					{:a.add(new nodo(b,bleft,bright)); RESULT=a;:}
+		 |  id:a 									{:RESULT=new nodo("LISTA_ID",new nodo(a,aleft,aright));:}
+		 ;
+
+//***************MENSAJE
+
+MENSAJE::= mensaje apar E:a cpar 					{:RESULT=new nodo("MENSAJE",a);:}		
+		;
+
+
+//*************RETORNAR
+
+RETORNAR::= retornar REL:a 							{:RESULT=new nodo("RETORNAR",a);:}
+		  | retornar:a 								{:RESULT=new nodo("RETORNAR",aleft,aright);:}
+		  ;
+
+
+
+//***********LISTA PARAMETROS
+
+
+PARAMETROS::= PARAMETROS:a coma E:b 				{:a.add(b); RESULT=a;:}
+			| E:a 									{:RESULT=new nodo("PARAMETROS",a);:}
+			;
+
+
+//**********CALL FUN
+
+CALLFUN ::= id:a apar PARAMETROS:b cpar 			{:RESULT = new nodo("CALLFUN",a,b,aleft,aright);:}
+		| 	id:a apar cpar				 			{:RESULT = new nodo("CALLFUN",a,aleft,aright);:}
+		;
+
+
+
+//*******************producciones para relacionales
+
+REL::=  REL:a AND REL:b                             {:RESULT = new nodo("&&",a,b);:}
+      | REL:a OR  REL:b                             {:RESULT = new nodo("||",a,b);:}
+      | NOT:b REL:a                                 {:RESULT = new nodo("!",a);:}
+      | OP:a                                        {:RESULT = a;:}
+      ;
+
+// producciones de operaciones relacionales
+
+OP::= OP:a iigual OP:b              				{:RESULT = new nodo("==",a,b);:}
+    | OP:a noig OP:b                				{:RESULT = new nodo("!=",a,b);:}
+    | OP:a mayor OP:b               				{:RESULT = new nodo(">",a,b);:}
+    | OP:a mayorigual OP:b          				{:RESULT = new nodo(">=",a,b);:}
+    | OP:a menor OP:b               				{:RESULT = new nodo("<",a,b);:}
+    | OP:a menorigual OP:b          				{:RESULT = new nodo("<=",a,b);:}
+    | FUNCION:a 								    {:RESULT =a;:}
+    | E:a                           				{:RESULT =a;:}
+    ;
+
+
+E::=
+     E:c menos E:d                   				{:RESULT = new nodo("-",c,d);:}
+   | E:f por E:g                     				{:RESULT = new nodo("*",f,g);:}
+   | E:h dividir E:i                 				{:RESULT = new nodo("/",h,i);:}
+   | E:j pot E:k                     				{:RESULT = new nodo("^",j,k);:}
+   | E:a mas E:b                     				{:RESULT = new nodo("+",a,b);:}
+   | E:a aumento                     				{:RESULT = new nodo("++",a);:}
+   | E:a decremento                  				{:RESULT = new nodo("--",a);:}
+   | menos E:a  									{:RESULT = new nodo("UNARIO",a);:}
+   | F:a                             				{:RESULT = a;:}
+   ;
+
+
+F::= numero:a           							{:RESULT = new nodo("NUM",a,aleft,aright);:}
+    |tstring:a          							{:RESULT = new nodo("STRING",a.replaceAll("\"",""),aleft,aright); :}
+    |tchar:a          								{:RESULT = new nodo("STRING",a.replaceAll("'",""),aleft,aright); :}
+    |fechas:a           							{:RESULT = new nodo("DATE",a.replaceAll("'",""),aleft,aright); :}
+    |id:a               							{:RESULT = new nodo("ID",a,aleft,aright); :}
+    |apar REL:a cpar    							{:RESULT = a;:}
+    |TRUE:a             							{:RESULT = new nodo("TRUE",aleft,aright);:}
+    |FALSE:a            							{:RESULT = new nodo("FALSE",aleft,aright);:}
+    |VECTOR:a 										{:RESULT = a;:}
+    |ATEXTO:a  										{:RESULT = a;:}
+    |CALLFUN:a  									{:RESULT = a;:}
+    |id:a alla REL:b clla							{:RESULT= new nodo("ACCESO_VECTOR",a,b,aleft,aright);:}
+    |id:a punto conteo 								{:RESULT=new nodo("CONTEO",new nodo("ID",a,aleft,aright));:}
+    //|CONTEO:a 								 		{:RESULT = a;:}
+   //|alla L_VALORES:a clla punto conteo 		{:RESULT=new nodo("CONTEO",new nodo("VECTOR",a));:}
+	
+  ;
+

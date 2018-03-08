@@ -1,0 +1,213 @@
+package gramatica_css;
+
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+import Arbol.*;
+
+//*** Codigo para el parser, variables, metodos
+
+parser code
+{:  
+    //public Archivo archivoA;
+    public nodo raiz;
+    //** Metodo al que se llama automaticamente ante algun error sintactico.*/
+    public void syntax_error(Symbol s)
+    {        
+        System.out.println("Error Sintactico Recuperado /////// lexema: " +s.value+ " Fila: " +s.right+ " Columna: "+s.left);
+        //ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    /**Metodo al que se llama en el momento en que ya no es posible una recuperacion de errores.*/
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {        
+        System.out.println("Error Sintactico Panico ////// Lexema: " +s.value+" Fila: "+s.right+ " Columna: "+s.left);
+       // ErrorT denegado = new ErrorT(s.value.toString(), s.right,s.left,"ERROR SINTACTICO" ,"Lexema Invalido");
+        //archivoA.lista_errores.add(denegado);
+    }
+
+    public void semantic(Symbol cur_token, String n) 
+    {
+        System.out.println("error semantico ");
+    }
+
+    public void semantic(String msg, Object obj) {}
+
+:}
+
+
+//*** Codigo para las acciones gramaticales
+
+action code
+{:
+
+    
+   // public ArrayList<Token> lista_reservadasB = new ArrayList<>();
+   // public void guardarReservada(String valor, int linea, int columna, String descripcion)
+   // {
+    //    lista_reservadasB.add(new Token(valor, linea, columna, descripcion));
+  // }
+:}  
+
+
+/*----------------------------------------------------------------------------
+----------------------------------------- Area de Declaraciones
+----------------------------------------------------------------------------*/
+
+//*** Simbolost
+terminal asig,coma,dosp,ppt,cora,corc,mas,menos,por,dividir,pot,aumento,decremento,apar,cpar;
+terminal izquierda,derecha,centrado,justificado,texto,negrilla,Cursiva,formato,Mayuscula,Minuscula,capital;
+terminal letra,TamTex,FondoElemento,Visible,Borde,opaque,colortext,grupo,iden;
+terminal alineado,resize,TRUE,FALSE,Tamelemento,idElemento;
+
+terminal  String numero,tstring,tchar,id;//,s_texto
+
+//*** Operadores
+non terminal nodo INICIO,ID,GRUPO,LISTA, SENTENCIA, SENTENCIAS,ALIENADO,TIPO_ALIN;
+non terminal nodo FORMATO,TIPO_FOR,LISTA_FORMATO, LETRA,TAMTEX,FONDO,REDIMENSION;
+non terminal nodo VISIBILIDAD,E,F,BORDE,OPACO,COLOR,TEXTO,TAMELEMENTO,IDELEMENT,ELEMENTO;
+//****PRECEDENCIA
+precedence left mas, menos;
+precedence left por,dividir;
+precedence left pot;
+precedence left aumento,decremento;
+
+
+start with INICIO;
+
+
+//INICIO::=  me texto ma cualquier_cosa me fin_texto ma ;
+
+INICIO::= LISTA:a                                             {:parser.raiz=a;:}
+        ;
+
+
+
+LISTA::=  LISTA:a  ID:b                                       {:a.add(b); RESULT=a;:}
+      |   LISTA:a  GRUPO:b                                    {:a.add(b); RESULT=a;:}
+      |   LISTA:a  ELEMENTO:b                                 {:a.add(b); RESULT=a;:}
+      |   ID:a                                                {:RESULT= new nodo("LISTA_CSS",a);:}
+      |   GRUPO:a                                             {:RESULT= new nodo("LISTA_CSS",a);:}
+      |   ELEMENTO:a                                          {:RESULT= new nodo("LISTA_CSS",a);:}
+      ;
+
+GRUPO::= grupo apar id:a cpar 
+         cora  SENTENCIAS:b corc                              {:RESULT= new nodo("GRUPO",a,b,aleft,aright);:}
+         ;
+
+ID::= iden  apar id:a cpar 
+      cora  SENTENCIAS:b corc                                 {:RESULT= new nodo("IDEN",a,b,aleft,aright);:}
+      ;
+
+SENTENCIAS::= SENTENCIAS:a SENTENCIA:b                        {:a.add(b); RESULT=a;:}
+          |   SENTENCIA:a                                     {:RESULT= new nodo("SENTENCIAS",a);:}
+          ;
+
+
+SENTENCIA::=  ALIENADO:a ppt                                  {:RESULT= a;:}
+          |   TEXTO:a ppt                                     {:RESULT= a;:}
+          |   FORMATO:a ppt                                   {:RESULT= a;:}
+          |   LETRA:a   ppt                                   {:RESULT= a;:}
+          |   TAMTEX:a  ppt                                   {:RESULT= a;:}
+          |   FONDO:a   ppt                                   {:RESULT= a;:}
+          |   VISIBILIDAD:a ppt                               {:RESULT= a;:} 
+          |   BORDE:a ppt                                     {:RESULT= a;:}  
+          |   OPACO:a ppt                                     {:RESULT= a;:}  
+          |   COLOR:a ppt                                     {:RESULT= a;:} 
+          |   TAMELEMENTO:a ppt                               {:RESULT= a;:}
+          |   IDELEMENT:a ppt                                 {:RESULT= a;:}
+          ;
+
+ALIENADO::= alineado  asig TIPO_ALIN:a                        {:RESULT = a;:}
+          ;
+
+TIPO_ALIN::= izquierda:a                                      {:RESULT= new nodo("ALINEADO","izquierda",aleft,aright);:}
+          |derecha:a                                          {:RESULT= new nodo("ALINEADO","derecha",aleft,aright);:}
+          |centrado:a                                         {:RESULT= new nodo("ALINEADO","centrado",aleft,aright);:}
+          |justificado:a                                      {:RESULT= new nodo("ALINEADO","justificado",aleft,aright);:}
+
+          ;
+
+
+FORMATO::= formato asig LISTA_FORMATO:a                       {:RESULT=a;:}
+        ;
+
+
+
+LISTA_FORMATO::=LISTA_FORMATO:a coma TIPO_FOR:b               {:a.add(b); RESULT= a;:}
+              | TIPO_FOR:a                                    {:RESULT= new nodo("FORMATO",a);:}
+              ;
+
+
+TIPO_FOR::=  negrilla:a                                       {:RESULT= new nodo("negrilla",aleft,aright);:}
+          |  Mayuscula:a                                      {:RESULT= new nodo("mayuscula",aleft,aright);:}
+          |  Minuscula:a                                      {:RESULT= new nodo("minuscula",aleft,aright);:}
+          |  capital:a                                        {:RESULT= new nodo("capital",aleft,aright);:}
+          |  Cursiva:a                                        {:RESULT= new nodo("cursiva",aleft,aright);:}
+          ;
+
+LETRA::= letra asig E:a                                       {:RESULT= new nodo("LETRA",a);:}
+    ;
+
+
+TAMTEX::= TamTex asig E:a                                     {:RESULT= new nodo("TAMTEX",a);:}
+        ;
+
+FONDO::= FondoElemento asig E:a                               {:RESULT= new nodo("FONDO",a);:}
+      ;
+
+
+//REDIMENSION::= resize    
+
+VISIBILIDAD::= Visible asig  E:a                              {:RESULT= new nodo("VISIBILIDAD",a);:}
+            ;
+
+
+BORDE::= Borde asig cora E:a coma E:b coma E:c corc           {:nodo nuevo = new nodo("BORDE",a,b); nuevo.add(c); RESULT= nuevo;:}
+      ;             
+
+
+OPACO::= opaque asig E:a                                      {:RESULT= new nodo("OPACO",a);:}
+      ;
+
+COLOR::= colortext asig E:a                                   {:RESULT= new nodo("COLOR",a);:}
+     ;
+
+
+TEXTO::= texto asig E:a                                       {:RESULT= new nodo("TEXTO",a);:}
+      ;
+
+
+TAMELEMENTO::= Tamelemento asig cora E:a coma E:b corc        {:RESULT= new nodo("TAMELEMENTO",a,b);:}
+            ;
+
+
+IDELEMENT::= idElemento asig E:a                              {:RESULT= new nodo("IDELEMENT",a);:}
+          ;
+
+
+
+ELEMENTO::= id:a cora SENTENCIAS:b corc                       {:RESULT= new nodo("ELEMENTO",a,b,aleft,aright);:}
+        ;
+
+E::=
+     E:c menos E:d                                            {:RESULT = new nodo("-",c,d);:}
+   | E:f por E:g                                              {:RESULT = new nodo("*",f,g);:}
+   | E:h dividir E:i                                          {:RESULT = new nodo("/",h,i);:}
+   | E:j pot E:k                                              {:RESULT = new nodo("^",j,k);:}
+   | E:a mas E:b                                              {:RESULT = new nodo("+",a,b);:}
+   | E:a aumento                                              {:RESULT = new nodo("++",a);:}
+   | E:a decremento                                           {:RESULT = new nodo("--",a);:}
+   | menos E:a                                                {:RESULT = new nodo("UNARIO",a);:}
+   | F:a                                                      {:RESULT = a;:}
+   ;
+
+
+F::= numero:a                                                 {:RESULT = new nodo("NUM",a,aleft,aright);:}
+    |tstring:a                                                {:RESULT = new nodo("STRING",a.replaceAll("\"",""),aleft,aright); :}
+    |tchar:a                                                  {:RESULT = new nodo("STRING",a.replaceAll("'",""),aleft,aright); :}
+    |id:a                                                     {:RESULT = new nodo("ID",a,aleft,aright); :}
+    |apar  E:a cpar                                           {:RESULT = a;:}
+    |TRUE:a                                                   {:RESULT = new nodo("TRUE",aleft,aright);:}
+    |FALSE:a                                                  {:RESULT = new nodo("FALSE",aleft,aright);:}
+  ;
